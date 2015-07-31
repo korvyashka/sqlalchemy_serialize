@@ -1,0 +1,6 @@
+ ☐ multi raws serializer
+ ☐ Implement Sequence
+ ☐ add exclude fields
+ ☐ add str repr of custom self method
+ ☐ Sphinx doc
+ ☐ Test with allure
