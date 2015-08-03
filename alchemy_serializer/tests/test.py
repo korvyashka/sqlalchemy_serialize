@@ -7,7 +7,7 @@ from .models import Guild
 from .serializers import (
     GuildSimpleSerializer, GuildCustomSerializer,
     GuildHybridSerializer, gold_and_level,
-    GuildModelSerializer, GuildModelSerializerOff,
+    GuildModelSerializer, GuildModelSerializerOffHybrid
 )
 
 
@@ -113,6 +113,7 @@ class TestSerializer(BaseTest):
 
             serialized = serializer.to_dict(data)
             acc2_dict = acc2.to_dict()
+
             acc2_dict['gold_and_level'] = gold_and_level(acc2_dict)
             self.assertEqual(acc2_dict, serialized)
     # test extra_hybrid
@@ -177,10 +178,14 @@ class TestModelSerializer(BaseTest):
             ).all()
 
             serialized = map(serializer.to_dict, data)
-            self.assertIn(acc1.to_dict(), serialized)
-            self.assertIn(acc2.to_dict(), serialized)
+            acc1_dict = acc1.to_dict()
+            acc1_dict['is_rich'] = False
+            acc2_dict = acc2.to_dict()
+            acc2_dict['is_rich'] = False
+            self.assertIn(acc1_dict, serialized)
+            self.assertIn(acc2_dict, serialized)
 
-            serializer = GuildModelSerializerOff()
+            serializer = GuildModelSerializerOffHybrid()
 
             # Test with get fields
             data = session.query(

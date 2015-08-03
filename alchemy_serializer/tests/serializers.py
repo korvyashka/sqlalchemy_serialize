@@ -9,6 +9,7 @@ from .models import Guild
 
 class GuildSimpleSerializer(SQLAlchemySerializator):
     fields = [
+        Guild.id,
         Guild.name,
         Guild.gold,
         Guild.level,
@@ -38,8 +39,11 @@ class GuildCustomSerializer(GuildSimpleSerializer):
 
 
 class GuildModelSerializer(SQLAlchemyModelSerializator):
-    pass
+    model = Guild
+
+    def serialize_created_on(self, value):
+        return value.isoformat()
 
 
-class GuildModelSerializerOff(SQLAlchemyModelSerializator):
+class GuildModelSerializerOffHybrid(GuildModelSerializer):
     to_inspect_hybrid_fields = False

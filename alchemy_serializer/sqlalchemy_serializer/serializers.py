@@ -119,6 +119,8 @@ class SQLAlchemyModelSerializator(SQLAlchemySerializator):
         to_inspect_hybrid_fields=None,
     ):
         self.model = self.__class__.model
+        if not self.model:
+            raise ValueError("set model class attribute")
         self.to_inspect_fields = False
         self.to_inspect_hybrid_fields = False
 
@@ -142,14 +144,14 @@ class SQLAlchemyModelSerializator(SQLAlchemySerializator):
         """
         result = {}
         if isinstance(raw, tuple):
-            result = super(SQLAlchemyModelSerializator, self).to_dict()
+            result = super(SQLAlchemyModelSerializator, self).to_dict(raw)
         else:
             for field in self.serialize_fields:
-                result[field.name] = field.serialize(
-                    getattr(raw, field.name)
+                result[field.key] = field.serialize(
+                    getattr(raw, field.key)
                 )
             for field in self.custom_serialize_fields:
-                result[field.name] = field.serialize(
+                result[field.key] = field.serialize(
                     result, *custom_args, **custom_kwargs
                 )
         return result

@@ -62,6 +62,7 @@ class Guild(Base):
 
     def to_dict(self):
         return {
+            'id': self.id,
             'name': self.name,
             'gold': self.gold,
             'level': self.level,
@@ -71,6 +72,7 @@ class Guild(Base):
 
     def to_dict_with_hybrid(self):
         return {
+            'id': self.id,
             'name': self.name,
             'gold': self.gold,
             'level': self.level,
