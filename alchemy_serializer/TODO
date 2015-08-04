@@ -4,3 +4,5 @@
  ☐ add str repr of custom self method
  ☐ Sphinx doc
  ☐ Test with allure
+ ☐ Build classes with metaclasses
+ ☐ Check serializer with single field
