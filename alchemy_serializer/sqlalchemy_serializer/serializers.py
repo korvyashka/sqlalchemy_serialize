@@ -6,46 +6,61 @@ from .fields import SerializeField, SerializeCustomModelField
 
 
 class SQLAlchemySerializator(object):
+    """
+    Base serialize class.
+    Class is intended to work only with group of fields.
+
+    Fields are of 3 types:
+        Common fields: model or
+
+    .. code::
+
+
+    :param arg1:
+    :type arg1:
+
+    :rtype:
+    :return:
+    """
     fields = None
-    hybrid_fields = None
 
     def __init__(
-        self, extra_fields=None,
-        extra_hybrid_fields=None,
+        self, *extra_fields
     ):
+        """
+        Base serialize class.
+
+        :param arg1:
+        :type arg1:
+
+        :rtype:
+        :return:
+        """
         self.query_fields = []
         self.serialize_fields = []
         self.custom_serialize_fields = []
 
         self._init_query_fields(
             extra_fields=extra_fields,
-            extra_hybrid_fields=extra_hybrid_fields,
         )
         self._init_serialize_fields()
         self._init_custom_serialize_fields()
 
     def _init_query_fields(
         self, extra_fields=None,
-        extra_hybrid_fields=None,
     ):
         class_fields = self.__class__.fields or []
         extra_fields = extra_fields or []
-        simple_fields = class_fields + extra_fields
-        class_hybrid_fields = self.__class__.hybrid_fields or []
-        extra_hybrid_fields = extra_hybrid_fields or []
+        query_fields = class_fields + list(extra_fields)
 
-        hybrid_fields = class_hybrid_fields + extra_hybrid_fields
-
-        query_fields = simple_fields + hybrid_fields
-
-        self.simple_fields = simple_fields
-        self.hybrid_fields = hybrid_fields
         self.query_fields = query_fields
 
     def _init_serialize_fields(self):
         serialize_fields = []
         for field in self.query_fields:
-            key = field.key or field.anon_label
+            key = field.key
+            if not key:
+                raise ValueError('provide label for all non-Model fields')
             serialize_field = getattr(self, key, None)
             serialize_func = getattr(
                 self, "serialize_{}".format(key), None
@@ -97,9 +112,10 @@ class SQLAlchemyModelSerializator(SQLAlchemySerializator):
 
     # provide fields as *fields or model to introspect fields
     # or both
-    >>> serializator = SqlAlchemySerializator(Guild.name)
-    ...
-    >>> data = serializator.to_dict(query_first_result)
+    .. code:: python
+
+        serializator = SqlAlchemySerializator(Guild.name)
+        data = serializator.to_dict(query_first_result)
 
     >>> serializator = SqlAlchemySerializator(model=Guild)
 
@@ -107,26 +123,40 @@ class SQLAlchemyModelSerializator(SQLAlchemySerializator):
     :type fields: list[sqlalchemy.Column]
     """
     fields = None
-    hybrid_fields = None
     to_inspect_fields = True
     to_inspect_hybrid_fields = True
     model = None
 
     def __init__(
-        self, extra_fields=None,
-        extra_hybrid_fields=None,
-        to_inspect_fields=None,
-        to_inspect_hybrid_fields=None,
+        self, *extra_fields,
+        **kwargs
     ):
-        self.model = self.__class__.model
+        self.model = self.__class__.model or kwargs.get('model', None)
         if not self.model:
             raise ValueError("set model class attribute")
-        self.to_inspect_fields = False
-        self.to_inspect_hybrid_fields = False
+
+        class_to_inspect_fields = self.__class__.to_inspect_fields
+        instance_to_inspect_fields = kwargs.get('to_inspect_fields', None)
+
+        to_inspect_fields = (
+            instance_to_inspect_fields
+            if instance_to_inspect_fields is not None
+            else class_to_inspect_fields
+        )
+        self.to_inspect_fields = to_inspect_fields
+
+        class_to_inspect_hybrid_fields = self.__class__.to_inspect_hybrid_fields
+        instance_to_inspect_hybrid_fields = kwargs.get('to_inspect_hybrid_fields', None)
+
+        to_inspect_hybrid_fields = (
+            instance_to_inspect_hybrid_fields
+            if instance_to_inspect_hybrid_fields is not None
+            else class_to_inspect_hybrid_fields
+        )
+        self.to_inspect_hybrid_fields = to_inspect_hybrid_fields
 
         super(SQLAlchemyModelSerializator, self).__init__(
-            extra_fields=extra_fields,
-            extra_hybrid_fields=extra_hybrid_fields,
+            *extra_fields
         )
 
     def to_dict(self, raw, *custom_args, **custom_kwargs):
@@ -158,42 +188,22 @@ class SQLAlchemyModelSerializator(SQLAlchemySerializator):
 
     def _init_query_fields(
         self, extra_fields=None,
-        extra_hybrid_fields=None,
-        to_inspect_fields=None,
-        to_inspect_hybrid_fields=None,
     ):
         super(SQLAlchemyModelSerializator, self)._init_query_fields(
             extra_fields=extra_fields,
-            extra_hybrid_fields=extra_hybrid_fields,
         )
         model = self.model
-        if not self.simple_fields:
-            class_to_inspect_fields = self.__class__.to_inspect_fields
-            to_inspect_fields = (
-                to_inspect_fields
-                if to_inspect_fields is not None
-                else class_to_inspect_fields
-            )
-            if to_inspect_fields:
+        if not self.query_fields:
+            if self.to_inspect_fields:
                 fields = get_columns(model).values()
-                self.simple_fields.extend(fields)
-
-        if not self.hybrid_fields:
-            class_to_inspect_hybrid_fields = self.__class__.to_inspect_hybrid_fields
-            to_inspect_hybrid_fields = (
-                to_inspect_hybrid_fields
-                if to_inspect_hybrid_fields is not None
-                else class_to_inspect_hybrid_fields
-            )
-            if to_inspect_hybrid_fields:
+                self.query_fields.extend(fields)
+            if self.to_inspect_hybrid_fields:
                 hybrid_properties = get_hybrid_properties(model)
                 for key in hybrid_properties.keys():
                     field = getattr(model, key)
 
                     field.key = key
-                    self.hybrid_fields.append(field)
-
-        self.query_fields = self.simple_fields + self.hybrid_fields
+                    self.query_fields.append(field)
 
 
 class Sequence(object):

@@ -22,8 +22,14 @@ class GuildSimpleSerializer(SQLAlchemySerializator):
 
 
 class GuildHybridSerializer(GuildSimpleSerializer):
-    hybrid_fields = [
-        Guild.is_rich.label('is_rich')
+    fields = [
+        Guild.id,
+        Guild.name,
+        Guild.gold,
+        Guild.level,
+        Guild.max_members,
+        Guild.created_on,
+        Guild.is_rich.label('is_rich'),
     ]
 
 

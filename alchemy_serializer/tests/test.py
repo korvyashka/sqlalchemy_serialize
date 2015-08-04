@@ -61,9 +61,7 @@ class TestSerializer(BaseTest):
             session.commit()
 
             serializer = GuildSimpleSerializer(
-                extra_fields=[
-                    (Guild.max_members == 1).label('single_guild')
-                ]
+                (Guild.max_members == 1).label('single_guild')
             )
             data = session.query(
                 *serializer.get_query_fields()
@@ -170,8 +168,7 @@ class TestModelSerializer(BaseTest):
             session.add(acc2)
             session.commit()
 
-            serializer = GuildModelSerializer(to_inspect_fields=False)
-
+            serializer = GuildModelSerializer(to_inspect_hybrid_fields=False)
             # Test with get fields
             data = session.query(
                 Guild
@@ -179,9 +176,7 @@ class TestModelSerializer(BaseTest):
 
             serialized = map(serializer.to_dict, data)
             acc1_dict = acc1.to_dict()
-            acc1_dict['is_rich'] = False
             acc2_dict = acc2.to_dict()
-            acc2_dict['is_rich'] = False
             self.assertIn(acc1_dict, serialized)
             self.assertIn(acc2_dict, serialized)
 
