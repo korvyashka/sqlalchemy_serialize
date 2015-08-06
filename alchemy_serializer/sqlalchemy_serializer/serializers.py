@@ -125,6 +125,11 @@ class SQLAlchemySerializator(object):
             lambda x: isinstance(x, SerializeCustomModelField),
             self.__class__.__dict__.values()
         )
+        for field in self.custom_serialize_fields:
+            if isinstance(field.func, basestring):
+                field.func = getattr(self, field.func, None)
+                if field.func is None:
+                    raise ValueError('Provide correct func for custom field')
 
     def get_query_fields(self):
         """
